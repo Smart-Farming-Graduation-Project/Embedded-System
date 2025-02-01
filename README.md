@@ -1,0 +1,1 @@
+# FOTA update file
