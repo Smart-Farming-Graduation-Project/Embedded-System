@@ -1,0 +1,9 @@
+../HAL/Motor/motor.c:16:6:Rover_Initialize	1
+../HAL/Motor/motor.c:27:6:Rover_Forward	1
+../HAL/Motor/motor.c:37:6:Rover_Backward	1
+../HAL/Motor/motor.c:46:6:Rover_Right	1
+../HAL/Motor/motor.c:55:6:Rover_Left	1
+../HAL/Motor/motor.c:64:6:Rover_Stop	1
+../HAL/Motor/motor.c:73:6:Rover_Change_Speed	3
+../HAL/Motor/motor.c:81:13:Set_Speed	2
+../HAL/Motor/motor.c:93:13:adjust_PWM_dutyCycle	4
