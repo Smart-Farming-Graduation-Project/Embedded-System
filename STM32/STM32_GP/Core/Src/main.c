@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "crc.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -26,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include "ultrasonic.h"
 #include "motor.h"
+#include "bootloader.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,8 +48,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-extern TIM_HandleTypeDef htim2;		// ultrasonic
-
 volatile uint16_t distance;
 volatile uint8_t isReadingFinished;
 /* USER CODE END PV */
@@ -60,7 +60,18 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance == TIM10)
+    {
+      if(isReadingFinished)
+	  {
+		isReadingFinished = 0;
+		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+		Ultrasonic_Get_Distance();
+	  }
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -95,28 +106,35 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM2_Init();
   MX_USART1_UART_Init();
+  MX_CRC_Init();
+  MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
   Rover_Initialize();
   Ultrasnoic_Initialize();
+  HAL_TIM_Base_Start_IT(&htim10);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	if(isReadingFinished)
-	{
-	  isReadingFinished = 0;
-	  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-	  HAL_Delay(10);
-	  Ultrasonic_Get_Distance();
-	}
+//	  if(isReadingFinished)
+//	  {
+//		isReadingFinished = 0;
+//
+//		HAL_Delay(10);
+//		Ultrasonic_Get_Distance();
+//	  }
 
-	  HAL_UART_Receive(&huart1, (uint8_t*)&bt_value, 1, 20);
+	  HAL_UART_Receive(&huart1, (uint8_t*)&bt_value, 1, 30);
 
 	  if(bt_value)
 	  {
-		  if('F' == bt_value || 'B' == bt_value || 'R' == bt_value || 'L' == bt_value)
+		  if('U' == bt_value){
+			  bt_value = 0;
+			  Bootloader_Handle_Command();
+		  }
+		  else if('F' == bt_value || 'B' == bt_value || 'R' == bt_value || 'L' == bt_value)
 			  last_bt_value = bt_value;
 		  else
 			  last_bt_value = 0;

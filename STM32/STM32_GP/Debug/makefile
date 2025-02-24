@@ -54,6 +54,12 @@ default.size.stdout \
 OBJDUMP_LIST += \
 STM32_GP.list \
 
+OBJCOPY_HEX += \
+STM32_GP.hex \
+
+OBJCOPY_BIN += \
+STM32_GP.bin \
+
 
 # All Target
 all: main-build
@@ -77,12 +83,22 @@ STM32_GP.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
+STM32_GP.hex: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O ihex $(EXECUTABLES) "STM32_GP.hex"
+	@echo 'Finished building: $@'
+	@echo ' '
+
+STM32_GP.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "STM32_GP.bin"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) STM32_GP.elf STM32_GP.list STM32_GP.map default.size.stdout
+	-$(RM) STM32_GP.bin STM32_GP.elf STM32_GP.hex STM32_GP.list STM32_GP.map default.size.stdout
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_HEX) $(OBJCOPY_BIN)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'
