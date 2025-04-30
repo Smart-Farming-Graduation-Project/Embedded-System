@@ -11,6 +11,7 @@
 #include "bootloader.h"
 #include "usart.h"
 #include "crc.h"
+#include "tim.h"
 
 /************************************    Static Functions Decelerations  ************************************/
 static void Bootloader_Get_Chip_Identification_Number(uint8_t *Host_Buffer);
@@ -20,6 +21,7 @@ static void Bootloader_Erase_Flash(uint8_t *Host_Buffer);
 static void Bootloader_Memory_Write(uint8_t *Host_Buffer);
 
 static uint8_t Bootloader_CRC_Verify(uint8_t *pData, uint32_t Data_Len, uint32_t Host_CRC);
+static void Bootloader_Send_ACK(void);
 static void Bootloader_Send_NACK(void);
 static void Bootloader_Send_Data_To_Host(uint8_t *Host_Buffer, uint32_t Data_Len);
 static uint8_t Host_Address_Verification(uint32_t Jump_Address);
@@ -94,11 +96,14 @@ static void Bootloader_Get_Chip_Identification_Number(uint8_t *Host_Buffer)
 	/* Extract the CRC32 and packet length sent by the HOST */
 	Host_CMD_Packet_Len = Host_Buffer[0] + 1;
 	Host_CRC32 = *((uint32_t *)((Host_Buffer + Host_CMD_Packet_Len) - CRC_TYPE_SIZE_BYTE));
+
 	/* CRC Verification */
 	if(CRC_VERIFICATION_PASSED == Bootloader_CRC_Verify((uint8_t *)&Host_Buffer[0] , Host_CMD_Packet_Len - 4, Host_CRC32)){
+		Bootloader_Send_ACK();
 		/* Get the MCU chip identification number */
 		MCU_Identification_Number = (uint16_t)((DBGMCU->IDCODE) & 0x00000FFF);
 		/* Report chip identification number to HOST */
+
 		Bootloader_Send_Data_To_Host((uint8_t *)&MCU_Identification_Number, 2);
 	}
 	else{
@@ -124,14 +129,17 @@ static void Bootloader_Read_Protection_Level(uint8_t *Host_Buffer)
 	/* Extract the CRC32 and packet length sent by the HOST */
 	Host_CMD_Packet_Len = Host_Buffer[0] + 1;
 	Host_CRC32 = *((uint32_t *)((Host_Buffer + Host_CMD_Packet_Len) - CRC_TYPE_SIZE_BYTE));
-/* CRC Verification */
+
+	/* CRC Verification */
 	if(CRC_VERIFICATION_PASSED == Bootloader_CRC_Verify((uint8_t *)&Host_Buffer[0] , Host_CMD_Packet_Len - 4, Host_CRC32)){
+		Bootloader_Send_ACK();
+
 		/* Read Protection Level */
 		RDP_Level = CBL_STM32F401_Get_RDP_Level();
 		if(0xAA == RDP_Level)		 RDP_Level = 0x00;
 		else if(0x55 == RDP_Level)   RDP_Level = 0x01;
 		/* Report Valid Protection Level */
-		//Bootloader_Send_Data_To_Host((uint8_t *)&RDP_Level, 1);
+		Bootloader_Send_Data_To_Host((uint8_t *)&RDP_Level, 1);
 	}
 	else{
 		Bootloader_Send_NACK();
@@ -146,13 +154,17 @@ static void Bootloader_Jump_To_User_App(uint8_t *Host_Buffer)
 	/* Extract the CRC32 and packet length sent by the HOST */
 	Host_CMD_Packet_Len = Host_Buffer[0] + 1;
 	Host_CRC32 = *((uint32_t *)((Host_Buffer + Host_CMD_Packet_Len) - CRC_TYPE_SIZE_BYTE));
+
 	/* CRC Verification */
 	if(CRC_VERIFICATION_PASSED == Bootloader_CRC_Verify((uint8_t *)&Host_Buffer[0] , Host_CMD_Packet_Len - 4, Host_CRC32))
 	{
+		Bootloader_Send_ACK();
+
 		if(0xFFFFFFFF != *((volatile uint32_t *)FLASH_SECTOR2_BASE_ADDRESS))
 		{
-			appExists = 1;
-			//Bootloader_Send_Data_To_Host((uint8_t *)&appExists, 1);
+			appExists = 0x1;
+			Bootloader_Send_Data_To_Host((uint8_t *)&appExists, 1);
+			HAL_TIM_Base_Stop_IT(&htim10);
 			/* Value of the main stack pointer of our main application */
 			uint32_t MSP_Value = *((volatile uint32_t *)FLASH_SECTOR2_BASE_ADDRESS);
 
@@ -173,7 +185,7 @@ static void Bootloader_Jump_To_User_App(uint8_t *Host_Buffer)
 		}
 		else
 		{
-			appExists = 0;
+			appExists = 0x0;
 			Bootloader_Send_Data_To_Host((uint8_t *)&appExists, 1);
 		}
 	}
@@ -249,18 +261,21 @@ static void Bootloader_Erase_Flash(uint8_t *Host_Buffer)
 	/* Extract the CRC32 and packet length sent by the HOST */
 	Host_CMD_Packet_Len = Host_Buffer[0] + 1;
 	Host_CRC32 = *((uint32_t *)((Host_Buffer + Host_CMD_Packet_Len) - CRC_TYPE_SIZE_BYTE));
+
 	/* CRC Verification */
 	if(CRC_VERIFICATION_PASSED == Bootloader_CRC_Verify((uint8_t *)&Host_Buffer[0] , Host_CMD_Packet_Len - 4, Host_CRC32))
 	{
+		Bootloader_Send_ACK();
 		/* Perform Mass erase or sector erase of the user flash */
-		Erase_Status = Perform_Flash_Erase(2, 4);
+		Erase_Status = Perform_Flash_Erase(2, 2);
+
 		if(SUCCESSFUL_ERASE == Erase_Status){
 			/* Report erase Passed */
-			//Bootloader_Send_Data_To_Host((uint8_t *)&Erase_Status, 1);
+			Bootloader_Send_Data_To_Host((uint8_t *)&Erase_Status, 1);
 		}
 		else{
 			/* Report erase failed */
-			//Bootloader_Send_Data_To_Host((uint8_t *)&Erase_Status, 1);
+			Bootloader_Send_Data_To_Host((uint8_t *)&Erase_Status, 1);
 		}
 	}
 	else{
@@ -323,8 +338,10 @@ static void Bootloader_Memory_Write(uint8_t *Host_Buffer)
 	/* Extract the CRC32 and packet length sent by the HOST */
 	Host_CMD_Packet_Len = Host_Buffer[0] + 1;
 	Host_CRC32 = *((uint32_t *)((Host_Buffer + Host_CMD_Packet_Len) - CRC_TYPE_SIZE_BYTE));
+
 	/* CRC Verification */
 	if(CRC_VERIFICATION_PASSED == Bootloader_CRC_Verify((uint8_t *)&Host_Buffer[0] , Host_CMD_Packet_Len - 4, Host_CRC32)){
+		Bootloader_Send_ACK();
 		/* Extract the start address from the Host packet */
 		HOST_Address = *((uint32_t *)(&Host_Buffer[2]));
 		/* Extract the payload length from the Host packet */
@@ -334,6 +351,7 @@ static void Bootloader_Memory_Write(uint8_t *Host_Buffer)
 		if(ADDRESS_IS_VALID == Address_Verification){
 			/* Write the payload to the Flash memory */
 			Flash_Payload_Write_Status = Flash_Memory_Write_Payload((uint8_t *)&Host_Buffer[7], HOST_Address, Payload_Len);
+
 			if(FLASH_PAYLOAD_WRITE_PASSED == Flash_Payload_Write_Status){
 				/* Report payload write passed */
 				Bootloader_Send_Data_To_Host((uint8_t *)&Flash_Payload_Write_Status, 1);
@@ -396,6 +414,12 @@ static uint8_t Bootloader_CRC_Verify(uint8_t *pData, uint32_t Data_Len, uint32_t
 	}
 
 	return CRC_Status;
+}
+
+static void Bootloader_Send_ACK(void)
+{
+	uint8_t Ack_Value = CBL_SEND_ACK;
+	HAL_UART_Transmit(BL_HOST_COMMUNICATION_UART, &Ack_Value, 1, HAL_MAX_DELAY);
 }
 
 static void Bootloader_Send_NACK(void)

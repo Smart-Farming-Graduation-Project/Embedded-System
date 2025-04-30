@@ -1,4 +1,0 @@
-../HAL/Ultrasonic/ultrasonic.c:22:13:Delay_10US	2
-../HAL/Ultrasonic/ultrasonic.c:29:6:Ultrasnoic_Initialize	1
-../HAL/Ultrasonic/ultrasonic.c:36:6:Ultrasonic_Get_Distance	1
-../HAL/Ultrasonic/ultrasonic.c:46:6:HAL_TIM_IC_CaptureCallback	5

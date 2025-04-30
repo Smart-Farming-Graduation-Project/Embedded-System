@@ -11,6 +11,7 @@
 #include "bootloader.h"
 #include "usart.h"
 #include "crc.h"
+#include "tim.h"
 
 /************************************    Static Functions Decelerations  ************************************/
 static void Bootloader_Get_Chip_Identification_Number(uint8_t *Host_Buffer);
@@ -163,24 +164,9 @@ static void Bootloader_Jump_To_User_App(uint8_t *Host_Buffer)
 		{
 			appExists = 0x1;
 			Bootloader_Send_Data_To_Host((uint8_t *)&appExists, 1);
-			//Bootloader_Send_Data_To_Host((uint8_t *)&appExists, 1);
-			/* Value of the main stack pointer of our main application */
-			uint32_t MSP_Value = *((volatile uint32_t *)FLASH_SECTOR3_BASE_ADDRESS);
 
-			/* Reset Handler definition function of our main application */
-			uint32_t MainAppAddr = *((volatile uint32_t *)(FLASH_SECTOR3_BASE_ADDRESS + 4));
-
-			/* Fetch the reset handler address of the user application */
-			pMainApp ResetHandler_Address = (pMainApp)MainAppAddr;
-
-			/* Set Main Stack Pointer */
-			__set_MSP(MSP_Value);
-
-			/* DeInitialize / Disable of modules */
-			HAL_RCC_DeInit(); /* DeInitialize the RCC clock configuration to the default reset state. */
-			                  /* Disable Maskable Interrupt */
-			/* Jump to Application Reset Handler */
-			ResetHandler_Address();
+			// Restart with the new app
+			NVIC_SystemReset();
 		}
 		else
 		{
@@ -266,7 +252,7 @@ static void Bootloader_Erase_Flash(uint8_t *Host_Buffer)
 	{
 		Bootloader_Send_ACK();
 		/* Perform Mass erase or sector erase of the user flash */
-		Erase_Status = Perform_Flash_Erase(3, 2);
+		Erase_Status = Perform_Flash_Erase(3, 1);  //
 		osDelay(500);
 		if(SUCCESSFUL_ERASE == Erase_Status){
 			/* Report erase Passed */

@@ -26,14 +26,14 @@ void Rover_Initialize(void)
 
 void Rover_Forward(void)
 {
-	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_LEFT_FRONT_PIN | MOTOR_RIGHT_FRONT_PIN
+	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_LEFT_FRONT_PIN | MOTOR_LEFT_BACK_PIN
 					| MOTOR_RIGHT_FRONT_PIN | MOTOR_RIGHT_BACK_PIN, GPIO_PIN_SET);
 	Set_Speed();
 }
 
 void Rover_Backward(void)
 {
-	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_LEFT_FRONT_PIN | MOTOR_RIGHT_FRONT_PIN
+	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_LEFT_FRONT_PIN | MOTOR_LEFT_BACK_PIN
 					| MOTOR_RIGHT_FRONT_PIN | MOTOR_RIGHT_BACK_PIN, GPIO_PIN_RESET);
 	Set_Speed();
 }
@@ -83,7 +83,6 @@ static void Set_Speed(void)
 
 static void adjust_PWM_dutyCycle(TIM_HandleTypeDef* pwmHandle, uint32_t pwmChannel, float dutyCycle)
 {
-
     // Calculate the new pulse width based on the duty cycle percentage
     uint32_t maxCCR = pwmHandle->Instance->ARR;
     uint32_t newCCR = (uint32_t)((dutyCycle / 100.0f) * maxCCR);

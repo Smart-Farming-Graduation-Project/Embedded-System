@@ -30,10 +30,11 @@
 #define CRC_VERIFICATION_FAILED          0x00
 #define CRC_VERIFICATION_PASSED          0x01
 
-#define CBL_SEND_NACK                    0xAB
+#define CBL_SEND_ACK                     0x1
+#define CBL_SEND_NACK                    0x0
 
 /* Start address of sector 2 */
-#define FLASH_SECTOR2_BASE_ADDRESS       0x08008000U
+#define FLASH_SECTOR2_BASE_ADDRESS       0x0800C000U
 
 #define ADDRESS_IS_INVALID               0x00
 #define ADDRESS_IS_VALID                 0x01

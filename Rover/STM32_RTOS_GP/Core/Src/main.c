@@ -59,7 +59,8 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+#define FLASH_SECTOR3_BASE_ADDRESS 0x0800C000U
+typedef void (*pMainApp)(void);
 /* USER CODE END 0 */
 
 /**
@@ -69,7 +70,24 @@ void MX_FREERTOS_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	// Jump to new app if there is any
+	if(0xFFFFFFFF != *((volatile uint32_t *)FLASH_SECTOR3_BASE_ADDRESS))
+	{
+		/* Value of the main stack pointer of our main application */
+		uint32_t MSP_Value = *((volatile uint32_t *)FLASH_SECTOR3_BASE_ADDRESS);
 
+		/* Reset Handler definition function of our main application */
+		uint32_t MainAppAddr = *((volatile uint32_t *)(FLASH_SECTOR3_BASE_ADDRESS + 4));
+
+		/* Fetch the reset handler address of the user application */
+		pMainApp ResetHandler_Address = (pMainApp)MainAppAddr;
+
+		/* Set Main Stack Pointer */
+		__set_MSP(MSP_Value);
+
+		/* Jump to Application Reset Handler */
+		ResetHandler_Address();
+	}
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/

@@ -148,15 +148,6 @@ void UltrasonicTask(void *argument)
   /* USER CODE BEGIN UltrasonicTask */
 	HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_3);
 
-//  	// Send Trigger (first reading is bad, and also take some time for initialization)
-//	HAL_GPIO_WritePin(ULTRASONUC_TRIGGER_PORT, ULTRASONIC_TRIGGER_PIN, GPIO_PIN_SET);
-//	// 10us delay
-//	__HAL_TIM_SET_COUNTER(ULTRASONIC_ECHO_PIN_IC, 0);
-//	while(__HAL_TIM_GET_COUNTER(ULTRASONIC_ECHO_PIN_IC) < 10); /* TIMER Tick time = 1us */
-//	HAL_GPIO_WritePin(ULTRASONUC_TRIGGER_PORT, ULTRASONIC_TRIGGER_PIN, GPIO_PIN_RESET);
-//	__HAL_TIM_ENABLE_IT(ULTRASONIC_ECHO_PIN_IC, TIM_IT_CC3);
-//	osDelay(100);
-
   /* Infinite loop */
   for(;;)
   {
