@@ -49,7 +49,7 @@ String Firmware_Update_URL = "";
 bool newUpdateAvailable = false;
 
 // Current firmware version
-#define CURRENT_FIRMWARE_VERSION "1.0"
+#define CURRENT_FIRMWARE_VERSION "1.1"
 
 /****************************************************************************************************/
 
@@ -439,12 +439,13 @@ static void directMethodCallback(const char* method_name, const char* payload, s
 static void generateTelemetryPayload()
 {
   /************************************  Write Sensors Data ************************************/
-  telemetry_payload = "{ \"msgCount\": " + String(telemetry_send_count++) +
-                      ", \"Temperature\": " + String(temperature) +
-                      ", \"Humidity\": " + String(humidity) +
-                      ", \"Flame\": " + String(flame) +
-                      ", \"Soil Moisture\": " + String(soil_moisture) + 
-                      ", \"Light Intensity\": " + String(intensity) +" }";
+  telemetry_payload = "{ \"messageId\":" + String(telemetry_send_count++) +
+                      ", \"deviceId\": \"" + String("ESP32 Client") + "\"" +
+                      ", \"Temperature\":" + String(temperature) +
+                      ", \"Humidity\":" + String(humidity) +
+                      ", \"Flame\":" + String(flame) +
+                      ", \"SoilMoisture\":" + String(soil_moisture) + 
+                      ", \"LightIntensity\":" + String(intensity) +" }";
 
   /*********************************************************************************************/
 }
@@ -592,9 +593,18 @@ void loop()
     temperature = 0.0;
   }
 
-  soil_moisture = map(analogRead(SOIL_MOISTURE_PIN), 0, 4095, 0, 100);
+  soil_moisture = map(analogRead(SOIL_MOISTURE_PIN), 0, 4095, 100, 0);
   flame = map(analogRead(FLAME_PIN), 0, 4095, 100, 0);
   intensity = map(analogRead(LIGHT_INTENSITY_PIN), 0, 4095, 0, 100);
+
+  /* Debug Messages */
+  Serial.println("\nDebug Message: Show sensor data");
+  Serial.print("'C Temperature: ");     Serial.println(temperature);
+  Serial.print("% Humidity: ");         Serial.println(humidity);
+  Serial.print("% Soil Moisture: ");    Serial.println(soil_moisture);
+  Serial.print("% Flame: ");            Serial.println(flame);
+  Serial.print("% Light Intensity: ");  Serial.println(intensity);
+  Serial.println("");
 
   if (millis() > next_telemetry_send_time_ms || flame > 0)
   {
