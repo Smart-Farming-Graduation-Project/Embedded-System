@@ -1,0 +1,15 @@
+../Drivers/CMSIS/Include/core_cm4.h:1938:34:__NVIC_SystemReset	4	static,ignoring_inline_asm
+../Core/Src/bootloader.c:35:11:Bootloader_Handle_Command	16	static
+../Core/Src/bootloader.c:91:13:Bootloader_Get_Chip_Identification_Number	32	static
+../Core/Src/bootloader.c:114:16:CBL_STM32F401_Get_RDP_Level	40	static
+../Core/Src/bootloader.c:123:13:Bootloader_Read_Protection_Level	32	static
+../Core/Src/bootloader.c:149:13:Bootloader_Jump_To_User_App	24	static
+../Core/Src/bootloader.c:182:16:Perform_Flash_Erase	48	static
+../Core/Src/bootloader.c:240:13:Bootloader_Erase_Flash	32	static
+../Core/Src/bootloader.c:272:16:Flash_Memory_Write_Payload	40	static
+../Core/Src/bootloader.c:314:13:Bootloader_Memory_Write	32	static
+../Core/Src/bootloader.c:361:16:Host_Address_Verification	24	static
+../Core/Src/bootloader.c:380:16:Bootloader_CRC_Verify	40	static
+../Core/Src/bootloader.c:404:13:Bootloader_Send_ACK	16	static
+../Core/Src/bootloader.c:410:13:Bootloader_Send_NACK	16	static
+../Core/Src/bootloader.c:416:13:Bootloader_Send_Data_To_Host	16	static

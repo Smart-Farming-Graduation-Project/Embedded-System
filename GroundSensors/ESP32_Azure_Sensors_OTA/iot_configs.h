@@ -8,6 +8,3 @@
 
 // Publish 1 message every 5 seconds
 #define TELEMETRY_FREQUENCY_MILLISECS 10000
-
-
-// az iot hub monitor-events --hub-name "ehabhub" --device-id "ehabdev" --output json

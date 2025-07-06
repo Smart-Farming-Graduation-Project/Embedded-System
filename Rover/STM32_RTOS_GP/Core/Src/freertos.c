@@ -165,7 +165,7 @@ void UltrasonicTask(void *argument)
 		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 	}
 
-    osDelay(30);
+    osDelay(60);
   }
   /* USER CODE END UltrasonicTask */
 }
@@ -181,30 +181,32 @@ void RoverCommands(void *argument)
 {
   /* USER CODE BEGIN RoverCommands */
   uint16_t distance = 0;
-  uint8_t bt_value = 0, last_bt_value = 0;
+  uint8_t ras_value = 0, last_ras_value = 0;
   Rover_Initialize();
+
   /* Infinite loop */
   for(;;)
   {
-	HAL_UART_Receive(&huart1, (uint8_t*)&bt_value, 1, 0);
-	if(bt_value && 'K' != bt_value) // ignore keep alive command
+	HAL_UART_Receive(&huart1, (uint8_t*)&ras_value, 1, 0);
+
+	if(ras_value && 'K' != ras_value) // ignore keep alive command
 	{
-	  if('U' == bt_value){
-		  bt_value = 0;
+	  if('U' == ras_value){
+		  ras_value = 0;
 		  Bootloader_Handle_Command();
 	  }
-	  else if('F' == bt_value || 'B' == bt_value || 'R' == bt_value || 'L' == bt_value)
-		  last_bt_value = bt_value;
+	  else if('F' == ras_value || 'B' == ras_value || 'R' == ras_value || 'L' == ras_value)
+		  last_ras_value = ras_value;
 	  else
-		  last_bt_value = 0;
+		  last_ras_value = 0;
 	}
-	else{ bt_value = last_bt_value; }
+	else{ ras_value = last_ras_value; }
 
-	switch(bt_value)
+	switch(ras_value)
 	{
 	  case 'F':
 		  osMessageQueueGet(UltrasonicDistanceHandle, &distance, (uint8_t*)1, 0);
-		  if(20 > distance && 0 < distance)
+		  if(40 > distance && 0 < distance)
 			  Rover_Stop();
 		  else
 			  Rover_Forward();
@@ -226,12 +228,13 @@ void RoverCommands(void *argument)
 		  Rover_Stop();
 		  break;
 
-	  case '1': case '2': case '3': case '4': case '5':
-		  Rover_Change_Speed((bt_value - '0') * 20);
-		  bt_value = 0;
+	  case '0': case '1': case '2': case '3': case '4': case '5':
+		  Rover_Change_Speed((ras_value - '0') * 20);
+		  ras_value = 0;
 		  break;
 	}
-    osDelay(20);
+
+    osDelay(40);
   }
   /* USER CODE END RoverCommands */
 }
