@@ -27,10 +27,13 @@ GPIO.setup(RightLeftPin, GPIO.OUT)
 GPIO.setup(UpDownPin, GPIO.OUT)
 
 RightLeftServo = GPIO.PWM(RightLeftPin, 50)  
-RightLeftServo.start(0)
+RightLeftServo.start(90)
 
 UpDownServo = GPIO.PWM(UpDownPin, 50)
-UpDownServo.start(0)
+UpDownServo.start(90)
+
+ud_servo_angle = 90
+lr_servo_angle = 90
 
 #################################### Received commands from WiFi access point
 STM32_COMMANDS = {'F', 'B', 'R', 'L', 'S', '0', '1', '2', '3', '4', '5'}
@@ -147,6 +150,8 @@ signal.signal(signal.SIGINT, signal_handler)  # Catch Ctrl+C
 
 ############################################### Start the server to listen for commands
 def start_server(uart):
+    global ud_servo_angle, lr_servo_angle
+    
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(("192.168.2.1", 12345))
     server.listen(1)
@@ -160,6 +165,8 @@ def start_server(uart):
             if not data:
                 break
             command = data.decode().strip()
+            if command == 'K':    # Keep Alive
+                continue  # Skip if 'K' is received
             print(f"Received: {command}")
 
             # Send to STM32 via UART
@@ -182,15 +189,39 @@ def start_server(uart):
                     except Exception as e:
                         print(f"An error occurred: {e}")
                 elif command == 'U':
-                    set_angle(UpDownServo, 90)
+                    print("moving Servo Up")
+                    if ud_servo_angle - 10 >= 40:
+                        ud_servo_angle -= 10
+                        set_angle(UpDownServo, ud_servo_angle)
+                        print(f"UpDown Servo Angle: {ud_servo_angle}")
+                    else:
+                        print("Max Up angle reached")
                 elif command == 'D':
-                    set_angle(UpDownServo, 0)
+                    print("moving Servo Down")
+                    if ud_servo_angle + 10 <= 140:
+                        ud_servo_angle += 10
+                        set_angle(UpDownServo, ud_servo_angle)
+                        print(f"UpDown Servo Angle: {ud_servo_angle}")
+                    else:
+                        print("Min Down angle reached")
                 elif command == 'J':
-                    set_angle(RightLeftServo, 90)
+                    print("moving Servo Right")
+                    if lr_servo_angle - 10 >= 20:
+                        lr_servo_angle -= 10
+                        set_angle(RightLeftServo, lr_servo_angle)
+                        print(f"RightLeft Servo Angle: {lr_servo_angle}")
+                    else:
+                        print("Max Right angle reached")
                 elif command == 'O':
-                    set_angle(RightLeftServo, 0)
+                    print("moving Servo Left")
+                    if lr_servo_angle + 10 <= 160:
+                        lr_servo_angle += 10
+                        set_angle(RightLeftServo, lr_servo_angle)
+                        print(f"RightLeft Servo Angle: {lr_servo_angle}")
+                    else:
+                        print("Min Left angle reached")
                 elif command == 'T':
-                    print("nothing to do")
+                    print("Button Released")
             else:
                 print(f"Unknown command: {command}")
 
